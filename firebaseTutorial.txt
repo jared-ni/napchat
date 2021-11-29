@@ -1,0 +1,60 @@
+# firebase configuration
+firebaseConfig = {
+  'apiKey': "AIzaSyBWNP6emxWHKVLzHpSh3mcrLehvFEWWnOI",
+  'authDomain': "napchat-58702.firebaseapp.com",
+  'databaseURL': "https://napchat-58702-default-rtdb.firebaseio.com/",
+  'projectId': "napchat-58702",
+  'storageBucket': "napchat-58702.appspot.com",
+  'messagingSenderId': "284362631891",
+  'appId': "1:284362631891:web:6c28e23af9f8e658294226",
+  'measurementId': "G-8S27DG21PW"
+}
+firebase = pyrebase.initialize_app(firebaseConfig)
+db = firebase.database()
+
+# auth = firebase.auth()
+# storage = firebase.storage()
+
+# push or set to database for sign up
+data = {
+  'username': 'milkteadjTest',
+  'password': '123456'
+}
+db.child("users").child("new").set(data)
+
+# update Data (or if it doesn't exist, it adds)
+db.child("users").child("myUpdatedData").update({'username': 'milkteadChanged'})
+
+# access data with unknown id
+users = db.child("users").get()
+
+# delete data
+db.child("session").child("user_id").remove()
+
+# Read data: equal_to, start_at, end_at, limit_to_first, 
+users = db.child("users").order_by_child("password").equal_to("123456").get()
+for user in users:
+  print(user.val()['username'])
+
+# # user authentication
+# # Login
+# email = input("Enter your email: ")
+# password = input("Enter your password: ")
+# try:
+#   auth.sign_in_with_email_and_password(email, password)
+# except: 
+#   print("Invalid user or password. Try again")
+
+# # Sign Up
+# email = input("Enter Your email: ")
+# password = input("Enter your password: ")
+# confirmPass = input("Confirm password: ")
+# if password == confirmPass:
+#   auth.create_user_with_email_and_password(email, password)
+# else:
+#   print("passwords don't match")
+
+# Storage
+# filename = input("Enter the name of the file you want to upload: ")
+# cloudfilename = input("Enter the name of the file on the cloud: ")
+# storage.child(cloudfilename).put(filename)

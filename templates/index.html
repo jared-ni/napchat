@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    index
+{% endblock %}
+
+{% block main %}
+<div class="topnav">
+    <a id="napchat">Napchat</a>
+    <a class="active" href="#home">Nap Track</a>
+    <a href="#about">New Nap</a>
+    <a href="/logout">Log Out</a>
+    <a href="#contacContactt"></a>
+    <div class="search-container">
+      <form action="/action_page.php">
+        <input type="text" placeholder="Search.." name="search">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+    
