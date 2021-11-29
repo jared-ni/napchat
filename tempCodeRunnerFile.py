@@ -1,1 +1,1 @@
-1243123123123213
+db.child("session").child("user_id").get().val() is None:

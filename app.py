@@ -2,6 +2,7 @@ from flask import Flask, render_template, make_response, redirect, request
 import os
 import pyrebase
 from functools import wraps
+from werkzeug.security import check_password_hash, generate_password_hash
 
 # firebase configuration
 firebaseConfig = {
@@ -18,6 +19,14 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
 auth = firebase.auth()
 storage = firebase.storage()
+
+""""
+users = db.child("users").order_by_child("username").equal_to("hjw").get()
+print(users.val())
+for user in users.each():
+  if user.val()['username'] == 'hjw':
+    print("found")
+"""
 
 # define login decoration
 def login_required(f):
@@ -53,12 +62,21 @@ def login():
   if request.method == "POST":
     username = request.form.get("username")
     password = request.form.get("password")
-    try:
-      auth.sign_in_with_email_and_password(username, password)
-    except: 
-      print("Invalid user or password. Try again")
-      exit(0)
-  
+    
+    userFound = False
+    users = db.child("users").order_by_child("username").equal_to(username).get()
+
+    for user in users.each():
+      if user.val()['username'] == username:
+        userFound = True
+        if not check_password_hash(user.val()['hash'], password):
+          warning = "wrong password"
+          return render_template("login_alert.html", warning=warning)
+
+    if not userFound:
+      warning = "account doesn't exist"
+      return render_template("login_alert.html", warning=warning)
+
     #store username and password in firebase session
     db.child("session").update({'user_id': username})
 
@@ -76,17 +94,56 @@ def logout():
   return redirect("/")
 
 
-@app.route("/register", method=['GET', 'POST'])
+@app.route("/register", methods=['GET', 'POST'])
 def register():
   # push or set to database for sign up
-  data = {
-    'username': 'milkteadjTest',
-    'password': '123456'
-  }
-  db.child("users").child("new").set(data)
+
+  if request.method == 'POST':
+    username = request.form.get("username")
+    password = request.form.get("password")
+    repassword = request.form.get("repassword")
+
+    if not username or not password or not repassword:
+      warning = "One or more fields are missing."
+      return render_template("register_alert.html", warning=warning)
+    elif password != repassword:
+      warning = "Passwords do not match."
+      return render_template("register_alert.html", warning=warning)
+    
+    # check if username exists
+    users = db.child("users").order_by_child("username").equal_to(username).get()
+    for user in users.each():
+      if user.val()['username'] == username:
+        warning = "username already exists."
+        return render_template("register_alert.html", warning=warning)
+    
+    hash = generate_password_hash(password)
+
+    data = {
+      'username': username,
+      'hash': hash,
+    }
+    db.child("users").push(data)
 
   return render_template("register.html")
 
+@app.route("/newnap", methods=['GET', 'POST'])
+@login_required
+def newnap():
+
+  if request.method == 'POST':
+    date = request.form.get("date")
+    start = request.form.get("start")
+    end = request.form.get("end")
+
+    print("date is " + date)
+    print(start)
+    print(end)
+
+    return redirect("/")
+
+
+  return render_template("newnap.html")
   
 if __name__ == '__main__':
   app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 8080)))

@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    index
+{% endblock %}
+
+{% block main %}
+<div class="topnav">
+    <a id="napchat">Napchat</a>
+    <a href="/">Nap Track</a>
+    <a class="active" href="/newnap">New Nap</a>
+    <a href="/logout">Log Out</a>
+    <a href="#contacContactt"></a>
+    <div class="search-container">
+      <form action="/action_page.php">
+        <input type="text" placeholder="Search.." name="search">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <br/><br/><br/>
+  <div class="jumbotron jumbotron-fluid center">
+      
+      <div class="body text-center">
+
+        <form action="/newnap" method="post">
+          <div class="form-group">
+            <label for="date" class='lead'>Which date are you tracking sleep for? </label>
+            <p>(If slept after 12:00am, enter the previous date)</p>
+            <input type="date" id="date" name="date" min="2018-01-01" max="2028-12-31" required>
+          </div>
+          <div class="form-group">
+            <label for="start" class='lead'>
+              What time did you go to sleep?
+            </label>
+            <br/>
+            <input type="time" id="start" name="start" required>
+          </div>
+          <div class="form-group">
+            <label for="end" class='lead'>
+              What time did you wake up?
+            </label>
+            <br/>
+            <input type="time" id="end" name="end" required>
+            <br/>
+          </div>
+          <button type="submit" class="btn btn-primary">Track</button>
+          
+        </form>
+      </div>
+    
+  </div>
+
+  
+{% endblock %}
+    
