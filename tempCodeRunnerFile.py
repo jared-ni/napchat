@@ -1,1 +1,1 @@
-db.child("session").child("user_id").get().val() is None:
+jjjj

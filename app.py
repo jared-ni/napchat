@@ -17,8 +17,8 @@ firebaseConfig = {
 }
 firebase = pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
-auth = firebase.auth()
-storage = firebase.storage()
+# auth = firebase.auth()
+# storage = firebase.storage()
 
 """"
 users = db.child("users").order_by_child("username").equal_to("hjw").get()
@@ -27,6 +27,7 @@ for user in users.each():
   if user.val()['username'] == 'hjw':
     print("found")
 """
+
 
 # define login decoration
 def login_required(f):
@@ -132,13 +133,36 @@ def register():
 def newnap():
 
   if request.method == 'POST':
-    date = request.form.get("date")
-    start = request.form.get("start")
-    end = request.form.get("end")
+    date = request.form.get("date") # formatted: 2021-11-12
+    start = request.form.get("start") #formated: 20:19
+    end = request.form.get("end") #formated: 07:18
 
-    print("date is " + date)
-    print(start)
-    print(end)
+    # before 12:00 am:
+    start_arr = list(map(int, start.split(":")))
+    end_arr = list(map(int, end.split(":")))
+
+    # add the minutes together first, then hours
+    minutes = int(end_arr[1]) + (60 - int(start_arr[1]))
+    start_arr[0] += 1
+    hours = int(end_arr[0]) - int(start_arr[0])
+    if hours < 0:
+      hours += 24
+    hours += round(minutes/60, 1)
+
+    username = db.child("session").child("user_id").get().val()
+    track = db.child("sleepTracker").order_by_child("username").equal_to(username).order_by_child("date").equal_to(date).get()
+    # empty list is False, empty dict is None
+    if not track.val():
+      data = {
+        'date': date,
+        'hours': hours,
+        'username': username
+      }
+      db.child("sleepTracker").push(data)
+    else:
+      for day in track.each():
+        existing_hours = day.val()['hours']
+        db.child("sleepTracker").child(day.key()).update({'hours': existing_hours + hours})
 
     return redirect("/")
 
