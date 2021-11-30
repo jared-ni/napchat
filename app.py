@@ -1,8 +1,10 @@
+import datetime
 from flask import Flask, render_template, make_response, redirect, request
 import os
 import pyrebase
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import date, time
 
 # firebase configuration
 firebaseConfig = {
@@ -131,7 +133,7 @@ def register():
 @app.route("/newnap", methods=['GET', 'POST'])
 @login_required
 def newnap():
-
+  
   if request.method == 'POST':
     date = request.form.get("date") # formatted: 2021-11-12
     start = request.form.get("start") #formated: 20:19
@@ -166,8 +168,10 @@ def newnap():
 
     return redirect("/")
 
+  today = datetime.date.today()
+  week_ago = today - datetime.timedelta(days=7)
 
-  return render_template("newnap.html")
+  return render_template("newnap.html", today=today, week_ago=week_ago)
   
 if __name__ == '__main__':
   app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 8080)))
