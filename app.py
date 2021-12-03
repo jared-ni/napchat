@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date, time
 import requests
 import json
-import secrets
+import calendar
 
 # firebase configuration
 firebaseConfig = {
@@ -55,8 +55,28 @@ app.secret_key = db.child("session").child("secret_key").get().val()
 @app.route("/")
 @login_required
 def index():
-  print(db.child("session").child("user_id").get())
-  return render_template("index.html")
+  
+  year = 2021
+  month = 12
+  # first day determines the number of blank spaces to add
+  weekdays = calendar.weekheader(3).split()
+  #first_day = datetime.datetime(year, month, 1).weekday() #get day of the week (sun = 6)
+  days = list(calendar.monthrange(year, month))
+  if days[0] == 6:
+    days[0] = -1
+  
+  # date list
+  myDays = []
+  for i in range(days[0] + 1):
+    myDays.append("-")
+  for i in range(1, days[1] + 1):
+    myDays.append(str(i))
+  for i in range(len(myDays), 35):
+    myDays.append("-")
+
+  month_name = calendar.month_name[month]
+
+  return render_template("index.html", weekdays=weekdays, myDays=myDays, year=year, month=month_name)
 
 
 @app.route("/login", methods=["GET", "POST"])

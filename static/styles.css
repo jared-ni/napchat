@@ -77,3 +77,61 @@
 .topnav .search-container button:hover {
   background: #ccc;
 }
+
+
+/*index page */
+
+ul {
+  list-style-type: none;
+  white-space:nowrap;
+  text-align: center;
+  list-style: inside;
+}
+
+li {
+  display:inline-block;
+}
+
+/* calendar */
+.calendar {
+  margin: auto;
+  width: 700px;
+  padding: 10px;
+  top: 50%;
+  left: 50%;
+    
+}
+
+
+/* Weekdays (Mon-Sun) */
+.weekdays {
+  display: inline-block;
+  color: #dfebed;
+  font-weight: 600;
+  margin: auto;
+  width: 100%;
+  padding: 10px;
+}
+
+.weekdays li {
+  display: inline-block;
+  width: 13.8%;
+  color: #666;
+  border: 1px solid black;
+}
+
+
+.days {
+  display: inline-block;
+  color: #dfebed;
+  font-weight: 600;
+  margin: auto;
+  width: 100%;
+  padding: 10px;
+}
+
+.days li{
+  display: inline-block;
+  width: 13.8%;
+  color: #666;
+}
