@@ -50,7 +50,7 @@ def login_required(f):
 app = Flask(__name__)
 
 # set secret key for flask session
-app.secret_key = secrets.token_hex()
+app.secret_key = db.child("session").child("secret_key").get().val()
 
 @app.route("/")
 @login_required
