@@ -2,3 +2,4 @@ Flask
 pyrebase
 requests
 Werkzeug
+gunicorn
