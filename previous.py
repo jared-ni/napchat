@@ -1,13 +1,10 @@
 import datetime
-from flask import Flask, render_template, make_response, redirect, request, session
+from flask import Flask, render_template, make_response, redirect, request
 import os
 import pyrebase
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date, time
-import requests
-import json
-import secrets
 
 # firebase configuration
 firebaseConfig = {
@@ -41,16 +38,15 @@ def login_required(f):
   """
   @wraps(f)
   def decorated_function(*args, **kwargs):
-    if 'username' not in session:
+    if db.child("session").child("user_id").get().val() is None:
       return redirect("/login")
     return f(*args, **kwargs)
   return decorated_function
 
+
 # config app
 app = Flask(__name__)
 
-# set secret key for flask session
-app.secret_key = secrets.token_hex()
 
 @app.route("/")
 @login_required
@@ -62,28 +58,31 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
-  # clear login 
-  session.pop('username', None)
+  # clear session
+  db.child("session").child("user_id").remove()
 
   # get username and password from form
   if request.method == "POST":
     username = request.form.get("username")
     password = request.form.get("password")
     
-    try:
-      auth.sign_in_with_email_and_password(username, password)
-      session['username'] = username
-    except requests.HTTPError as e:
-      error_json = e.args[1]
-      error = json.loads(error_json)['error']['message']
-      if error == "INVALID_PASSWORD":
-        warning = "Invalid password. Try again."
-      elif error == "INVALID_EMAIL":
-        warning = "Invalid email. Try again."
-      else:
-        warning = "Could not log in with the provided information. Try again."
+    userFound = False
+    users = db.child("users").order_by_child("username").equal_to(username).get()
+
+    for user in users.each():
+      if user.val()['username'] == username:
+        userFound = True
+        if not check_password_hash(user.val()['hash'], password):
+          warning = "wrong password"
+          return render_template("login_alert.html", warning=warning)
+
+    if not userFound:
+      warning = "account doesn't exist"
       return render_template("login_alert.html", warning=warning)
-    
+
+    #store username and password in firebase session
+    db.child("session").update({'user_id': username})
+
     return redirect("/")
 
   return render_template("login.html")
@@ -93,7 +92,7 @@ def login():
 def logout():
   """Log user out"""
   # Forget any user_id
-  session.pop('username', None)
+  db.child("session").child("user_id").remove()
   # Redirect user to login form
   return redirect("/")
 
@@ -115,19 +114,19 @@ def register():
       return render_template("register_alert.html", warning=warning)
     
     # check if username exists
-    try:
-      user = auth.create_user_with_email_and_password(email=username, password=password)
-      return redirect("/")
-    except requests.HTTPError as e:
-      error_json = e.args[1]
-      error = json.loads(error_json)['error']['message']
-      if error == "EMAIL_EXISTS":
-        warning = "An account already exists for this email address."
-      elif error == "WEAK_PASSWORD : Password should be at least 6 characters" or error == "WEAK_PASSWORD":
-        warning = "Password should be at least 6 characters long."
-      elif error == "INVALID_EMAIL":
-        warning = "please provide a valid email address"
-      return render_template("register_alert.html", warning=warning)
+    users = db.child("users").order_by_child("username").equal_to(username).get()
+    for user in users.each():
+      if user.val()['username'] == username:
+        warning = "username already exists."
+        return render_template("register_alert.html", warning=warning)
+    
+    hash = generate_password_hash(password)
+
+    data = {
+      'username': username,
+      'hash': hash,
+    }
+    db.child("users").push(data)
 
   return render_template("register.html")
 

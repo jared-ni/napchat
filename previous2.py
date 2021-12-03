@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, render_template, make_response, redirect, request, session
+from flask import Flask, render_template, make_response, redirect, request
 import os
 import pyrebase
 from functools import wraps
@@ -7,7 +7,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date, time
 import requests
 import json
-import secrets
 
 # firebase configuration
 firebaseConfig = {
@@ -41,7 +40,7 @@ def login_required(f):
   """
   @wraps(f)
   def decorated_function(*args, **kwargs):
-    if 'username' not in session:
+    if auth.current_user is None:
       return redirect("/login")
     return f(*args, **kwargs)
   return decorated_function
@@ -49,8 +48,6 @@ def login_required(f):
 # config app
 app = Flask(__name__)
 
-# set secret key for flask session
-app.secret_key = secrets.token_hex()
 
 @app.route("/")
 @login_required
@@ -63,7 +60,7 @@ def index():
 def login():
 
   # clear login 
-  session.pop('username', None)
+  auth.current_user = None
 
   # get username and password from form
   if request.method == "POST":
@@ -72,7 +69,6 @@ def login():
     
     try:
       auth.sign_in_with_email_and_password(username, password)
-      session['username'] = username
     except requests.HTTPError as e:
       error_json = e.args[1]
       error = json.loads(error_json)['error']['message']
@@ -93,7 +89,7 @@ def login():
 def logout():
   """Log user out"""
   # Forget any user_id
-  session.pop('username', None)
+  auth.current_user = None
   # Redirect user to login form
   return redirect("/")
 
@@ -117,7 +113,6 @@ def register():
     # check if username exists
     try:
       user = auth.create_user_with_email_and_password(email=username, password=password)
-      return redirect("/")
     except requests.HTTPError as e:
       error_json = e.args[1]
       error = json.loads(error_json)['error']['message']
