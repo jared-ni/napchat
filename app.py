@@ -56,7 +56,7 @@ app.secret_key = db.child("session").child("secret_key").get().val()
 @login_required
 def index():
   
-  year = 2021
+  year = 2020
   month = 12
   # first day determines the number of blank spaces to add
   weekdays = calendar.weekheader(3).split()
@@ -74,9 +74,41 @@ def index():
   for i in range(len(myDays), 35):
     myDays.append("-")
 
+  # convert month to letter name
   month_name = calendar.month_name[month]
 
-  return render_template("index.html", weekdays=weekdays, myDays=myDays, year=year, month=month_name)
+  # get records and store in 2d list
+  print(session['username'])
+  records = db.child("sleepTracker").order_by_child("username").equal_to(session['username']).get()
+  print(records)
+  
+  myRecords = []
+  for record in records.each():
+    dateRecord = []
+    dateRecord.append(record.val()['date'])
+    dateRecord.append(record.val()['hours'])
+    myRecords.append(dateRecord)
+
+  print(myRecords)
+
+  # Must sort with date's order and compare each date's hour to desired hours. 
+  streak = 1
+  sortedRecords = sorted(myRecords, key = lambda l:l[0], reverse=True)
+  
+  # calculate streak
+  for i in range(len(sortedRecords) - 1):
+    time_cur = datetime.datetime.strptime(sortedRecords[i][0], "%Y-%m-%d")
+    time_prev = datetime.datetime.strptime(sortedRecords[i+1][0], "%Y-%m-%d")
+    day_delta = str(time_cur - time_prev)[0:5]
+    if day_delta != "1 day":
+      break
+    else:
+      streak += 1
+  # print(str(streak) + " streak!!!")
+
+  # calculate 
+
+  return render_template("index.html", weekdays=weekdays, myDays=myDays, year=year, month=month_name, streak=streak, myRecords=myRecords)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -164,15 +196,31 @@ def newnap():
     start_arr = list(map(int, start.split(":")))
     end_arr = list(map(int, end.split(":")))
 
+    # print(start_arr)
+    # print(end_arr)
+    # print("--------------------")
+
     # add the minutes together first, then hours
-    minutes = int(end_arr[1]) + (60 - int(start_arr[1]))
-    start_arr[0] += 1
+    if end_arr[0] == start_arr[0]:
+      minutes = end_arr[1] - start_arr[1]
+    else:
+      minutes = int(end_arr[1]) + (60 - int(start_arr[1]))
+      start_arr[0] += 1
+    
+    # print(str(minutes) + " minutes")
+    
     hours = int(end_arr[0]) - int(start_arr[0])
+    print(start_arr[0])
+    print(end_arr[0])
+    # print(str(hours) + " hours")
+
     if hours < 0:
       hours += 24
     hours += round(minutes/60, 1)
+    # print(str(hours) + " hours updated")
+    # print("----------------------------------------")
 
-    username = db.child("session").child("user_id").get().val()
+    username = session["username"]
     track = db.child("sleepTracker").order_by_child("username").equal_to(username).order_by_child("date").equal_to(date).get()
     # empty list is False, empty dict is None
     if not track.val():

@@ -21,11 +21,13 @@
   <br/>
   <div class="body">
     <h1 class="display-4 text-center">Nap Track Calendar</h1>
-    <p class="lead">&nbsp;&nbsp; Yellow = Sleep goal met</p>
-    <p class="lead">&nbsp;&nbsp; White = Sleep goal unmet</p>
+    <h2 class="display-5 text-center">Current Streak: {{streak}} days </h3>
+    <p>&nbsp;&nbsp; Yellow = Sleep goal met</p>
+    <p>&nbsp;&nbsp; White = Sleep goal unmet</p>
     <hr class="my-4">
 
     <div class="jumbotron calendar">
+      <h1 class="display-5 text-center">{{ month }} {{ year }}</h1>
 
       <ul class="weekdays">
         {% for i in range(7) %}
