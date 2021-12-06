@@ -43,6 +43,8 @@ app = Flask(__name__)
 # set secret key for flask session
 app.secret_key = db.child("session").child("secret_key").get().val()
 
+
+
 @app.route("/")
 @login_required
 def index():
@@ -63,7 +65,6 @@ def index():
       goal = 8
       default_goal = True
 
-  
   # first day determines the number of blank spaces to add
   weekdays = calendar.weekheader(3).split()
   #first_day = datetime.datetime(year, month, 1).weekday() #get day of the week (sun = 6)
@@ -185,6 +186,225 @@ def index():
   )
 
 
+
+# search for new user to add as friend
+@app.route("/search_user")
+
+
+# search for and find friends
+@app.route("/friends", methods=['GET', 'POST'])
+def friends():
+  
+  friends = db.child("friends").order_by_child("user").equal_to(session["username"]).get()
+  myFriends = []
+  for friend in friends.each():
+    person = []
+    person.append(friend.val()['friend'])
+    myFriends.append(person)
+  
+  # retrieve friend's names
+  for friend in myFriends:
+    person = db.child('users').order_by_child("username").equal_to(friend[0]).get()
+    for record in person.each():
+      try:
+        name = record.val()['name']
+        friend.append(name)
+      except:
+        name = "N/A"
+        friend.append(name)
+  print(myFriends)
+  # sortedRecords = sorted(myFriends, key = lambda l:l[1])
+  # print(sortedRecords)
+
+  # search friend's profile
+  if request.method == "POST":
+    username = request.form.get("view")
+
+    # index function
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
+    today = str(date.today())
+    today_day = int(today[8:])
+    goal = 8
+
+    # user information and retrieve sleep goal
+    user_records = db.child("users").order_by_child("username").equal_to(username).get()
+    for record in user_records.each():
+      try:
+        goal = float(record.val()['goal'])
+        default_goal = False
+      except:
+        goal = 8
+        default_goal = True
+
+    
+    # first day determines the number of blank spaces to add
+    weekdays = calendar.weekheader(3).split()
+    #first_day = datetime.datetime(year, month, 1).weekday() #get day of the week (sun = 6)
+    days = list(calendar.monthrange(year, month))
+    if days[0] == 6:
+      days[0] = -1
+    
+    # date list
+    myDays = []
+    for i in range(days[0] + 1):
+      myDays.append("-")
+    for i in range(1, days[1] + 1):
+      myDays.append(str(i))
+    for i in range(len(myDays), 35):
+      myDays.append("-")
+
+    # convert month to letter name
+    month_name = calendar.month_name[month]
+
+    # get records and store in 2d list
+    records = db.child("sleepTracker").order_by_child("username").equal_to(username).get()
+    
+    myRecords = []
+    for record in records.each():
+      dateRecord = []
+      dateRecord.append(record.val()['date'])
+      dateRecord.append(record.val()['hours'])
+      myRecords.append(dateRecord)
+
+    # Must sort with date's order and compare each date's hour to desired hours. 
+    streak = 0
+    sortedRecords = sorted(myRecords, key = lambda l:l[0], reverse=True)
+
+    # calculate streak
+    time_now = datetime.datetime.strptime(today, "%Y-%m-%d")
+  
+    if not sortedRecords:
+      streak = 0
+    elif time_now == datetime.datetime.strptime(sortedRecords[0][0], "%Y-%m-%d") and sortedRecords[0][1] >= goal:
+      streak += 1
+      for i in range(len(sortedRecords) - 1):
+        time_cur = datetime.datetime.strptime(sortedRecords[i][0], "%Y-%m-%d")
+        time_prev = datetime.datetime.strptime(sortedRecords[i+1][0], "%Y-%m-%d")
+        day_delta = str(time_cur - time_prev)[0:5]
+        if day_delta == "1 day" and sortedRecords[i+1][1] >= goal:
+          streak += 1
+        else:
+          break
+
+    # calculate whether each day in the month meets the required hours
+    monthColor = []
+    for i in range(days[0] + 1):
+      monthColor.append(False)
+
+    for i in range(1, days[1] + 1):
+      dayString = str(year) + "-" + str(month) + "-"
+      if i < 10:
+        dayString += "0" + str(i)
+      else: 
+        dayString += str(i)
+
+      added = False
+      for record in sortedRecords:
+        if record[0] == dayString and record[1] >= goal:
+          monthColor.append(True)
+          added = True
+          break
+      if not added:
+        monthColor.append(False)
+
+    # loop through the user record
+    for record in user_records.each():
+      try:
+        name = record.val()['name']
+      except:
+        name = "not set"
+      try: 
+        birthday = record.val()['birthday']
+      except:
+        birthday = "not set"
+
+      # check if goal was defaulted
+      if default_goal:
+        goal = "not set (defaulted to 8 hours / day)"
+      else:
+        goal = str(goal) + " hours / day"
+
+      # process age
+      if birthday == "not set":
+        age = "not set"
+      else:
+        today = str(date.today())
+        today = datetime.datetime.strptime(today, "%Y-%m-%d")
+        birthday = datetime.datetime.strptime(birthday, "%Y-%m-%d")
+        day_delta = today - birthday
+        day_delta = day_delta.days
+        age = day_delta // 365
+
+      # recommend sleep hours based on age
+      if not isinstance(age, int):
+        recommended = "8+ hours (age not set)"
+      elif age <= 12:
+        recommended = "9-12 hours / day"
+      elif age <= 18:
+        recommended = "8-10 hours / day"
+      elif age <= 60:
+        recommended = "7+ hours / day"
+    
+      return render_template("friend_profile.html",
+        weekdays=weekdays, 
+        myDays=myDays, 
+        year=year, 
+        month=month_name, 
+        streak=streak, 
+        myRecords=myRecords, 
+        monthColor=monthColor, 
+        today_day=today_day,
+        name=name, age=age, goal=goal, recommended=recommended
+      )
+
+  return render_template("friends.html", myFriends=myFriends)
+
+
+# history of all naps
+@app.route("/history", methods=['GET', 'POST'])
+def history():
+
+  # retrieve history
+  records = db.child("history").order_by_child("username").equal_to(session['username']).get()
+
+  myRecords = []
+  for record in records.each():
+    dateRecord = []
+    dateRecord.append(record.val()['timestamp'])
+    dateRecord.append(record.val()['date'])
+    dateRecord.append(record.val()['start'])
+    dateRecord.append(record.val()['end'])
+    dateRecord.append(record.val()['hours'])
+    myRecords.append(dateRecord)
+
+  # Must sort with date's order and compare each date's hour to desired hours. 
+  sortedRecords = sorted(myRecords, key = lambda l:l[0], reverse=True)
+
+  if request.method == "POST":
+    timestamp = request.form.get("delete")
+
+    for record in records.each():
+      if record.val()['timestamp'] == timestamp:
+        date = record.val()['date']
+        reducedHours = record.val()['hours']
+        
+        # update hours
+        sleepTrack = db.child("sleepTracker").order_by_child("username").equal_to(session['username']).get()
+        for day in sleepTrack:
+          if date == day.val()['date']:
+            current_hours = day.val()['hours']
+            db.child("sleepTracker").child(day.key()).update({'hours': current_hours - float(reducedHours)})
+        # remove from history
+        db.child("history").child(record.key()).remove()
+
+
+        return redirect("/history")
+
+  return render_template("history.html", sortedRecords=sortedRecords)
+
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -213,6 +433,7 @@ def login():
     return redirect("/")
 
   return render_template("login.html")
+
 
 
 @app.route("/profile")
@@ -246,6 +467,7 @@ def profile():
     email = session['username']
 
   return render_template("profile.html", name=name,age=age, goal=goal, email=email)
+
 
 
 # sets user profile
@@ -373,14 +595,20 @@ def newnap():
         print(username)
         entered = True
         break 
-
-    if not entered:
-      data = {
+    
+    data = {
         'date': date,
         'hours': hours,
-        'username': username
-      }
+        'username': username,
+    }
+    if not entered:
       db.child("sleepTracker").push(data)
+    
+    timestamp = str(datetime.datetime.now())
+    data['timestamp'] = timestamp
+    data['start'] = start
+    data['end'] = end
+    db.child("history").push(data)
     
     return redirect("/newnap")
 

@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    history
+{% endblock %}
+
+{% block main %}
+  <div class="topnav">
+    <a id="napchat">Napchat</a>
+    <a href="/">Nap Track</a>
+    <a href="/newnap">New Nap</a>
+    <a class="active" href='/history'>History</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Log Out</a>
+    <a href="#contacContactt"></a>
+    <div class="search-container">
+      <form action="/action_page.php">
+        <input type="text" placeholder="Search.." name="search">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <br/>
+  <div class="body">
+    <h1 id='napchat'>Nap History</h1>
+    <br>
+    <hr class="my-2">
+
+    <div class="jumbotron calendar">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Nap Date</th>
+            <th scope="col">Nap Start</th>
+            <th scope="col">Nap End</th>
+            <th scope="col">Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in sortedRecords %}
+          <tr>
+            <th scope="row">{{record[0]}}</th>
+            <td>{{record[1]}}</td>
+            <td>{{record[2]}}</td>
+            <td>{{record[3]}}</td>
+            <td>{{record[4]}}</td>
+            <td>
+              <form action="/history" method='post'>
+                <button type="submit" class="btn btn-primary" name="delete" value="{{record[0]}}">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+{% endblock %}
+    
