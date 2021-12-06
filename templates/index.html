@@ -5,10 +5,12 @@
 {% endblock %}
 
 {% block main %}
-<div class="topnav">
+  <div class="topnav">
     <a id="napchat">Napchat</a>
     <a class="active" href="/">Nap Track</a>
     <a href="/newnap">New Nap</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/profile">Profile</a>
     <a href="/logout">Log Out</a>
     <a href="#contacContactt"></a>
     <div class="search-container">
@@ -20,19 +22,35 @@
   </div>
   <br/>
   <div class="body">
-    <h1 class="display-4 text-center">Nap Track Calendar</h1>
-    <h2 class="display-5 text-center">Current Streak: {{streak}} days </h3>
-    <p>&nbsp;&nbsp; Yellow = Sleep goal met</p>
-    <p>&nbsp;&nbsp; White = Sleep goal unmet</p>
-    <hr class="my-4">
+    <h1 id='napchat'>Nap Track Calendar</h1>
+    <hr class="my-2">
+    <p class='text-center'>name: {{name}} </p>
+    <p class='text-center'>recommended sleep: {{recommended}} </p>
+    <p class='text-center'>daily sleep goal: {{goal}} </p>
+    <h4 id='napchat'>Current Streak: {{streak}} 
+      {% if 1 >= streak|int %}
+        day 
+      {% else %}
+        days
+      {% endif %}
+    </h4>
 
     <div class="jumbotron calendar">
-      <h1 class="display-5 text-center">{{ month }} {{ year }}</h1>
-
+      <hr class="my-4">
+      <h1 class="display-5 text-center" id='napchat'>{{ month }} {{ year }}</h1>
+      <p>&nbsp;&nbsp; Yellow = Sleep goal met</p>
+      <p>&nbsp;&nbsp; White = Sleep goal unmet / no record</p>
       <ul class="weekdays">
-        {% for i in range(7) %}
+        <li>
+          <div class="text-center">
+            <div class="card-body">
+              <h5 class="card-title"> Sun </h5>
+            </div>
+          </div>
+        </li>
+        {% for i in range(6) %}
           <li>
-            <div class="card text-center">
+            <div class="text-center">
               <div class="card-body">
                 <h5 class="card-title">{{ weekdays[i] }}</h5>
               </div>
@@ -44,11 +62,31 @@
       <ul class="days">
         {% for i in range(1, myDays|length + 1) %}
           <li>
+            {% if monthColor[i-1] and today_day == myDays[i-1] | int %}
+            <div class="card text-center h-100 card-yellow boarder">
+              <div class="card-body">
+                <h5 class="card-title">{{ myDays[i-1] }}</h5>
+              </div>
+            </div>
+            {% elif monthColor[i-1] %}
+            <div class="card text-center h-100 card-yellow">
+              <div class="card-body">
+                <h5 class="card-title">{{ myDays[i-1] }}</h5>
+              </div>
+            </div>
+            {% elif today_day == myDays[i-1] | int %}
+            <div class="card text-center h-100 boarder">
+              <div class="card-body">
+                <h5 class="card-title">{{ myDays[i-1] }}</h5>
+              </div>
+            </div>
+            {% else %}
             <div class="card text-center h-100">
               <div class="card-body">
                 <h5 class="card-title">{{ myDays[i-1] }}</h5>
               </div>
             </div>
+            {% endif %}
           </li>
           {% if i % 7 == 0 %}
             <br>

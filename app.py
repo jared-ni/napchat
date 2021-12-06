@@ -25,15 +25,6 @@ db = firebase.database()
 auth = firebase.auth()
 # storage = firebase.storage()
 
-""""
-users = db.child("users").order_by_child("username").equal_to("hjw").get()
-print(users.val())
-for user in users.each():
-  if user.val()['username'] == 'hjw':
-    print("found")
-"""
-
-
 # define login decoration
 def login_required(f):
   """
@@ -56,8 +47,23 @@ app.secret_key = db.child("session").child("secret_key").get().val()
 @login_required
 def index():
   
-  year = 2020
-  month = 12
+  year = datetime.datetime.now().year
+  month = datetime.datetime.now().month
+  today = str(date.today())
+  today_day = int(today[8:])
+  goal = 8
+
+  # user information and retrieve sleep goal
+  user_records = db.child("users").order_by_child("username").equal_to(session['username']).get()
+  for record in user_records.each():
+    try:
+      goal = float(record.val()['goal'])
+      default_goal = False
+    except:
+      goal = 8
+      default_goal = True
+
+  
   # first day determines the number of blank spaces to add
   weekdays = calendar.weekheader(3).split()
   #first_day = datetime.datetime(year, month, 1).weekday() #get day of the week (sun = 6)
@@ -78,9 +84,7 @@ def index():
   month_name = calendar.month_name[month]
 
   # get records and store in 2d list
-  print(session['username'])
   records = db.child("sleepTracker").order_by_child("username").equal_to(session['username']).get()
-  print(records)
   
   myRecords = []
   for record in records.each():
@@ -89,26 +93,96 @@ def index():
     dateRecord.append(record.val()['hours'])
     myRecords.append(dateRecord)
 
-  print(myRecords)
-
   # Must sort with date's order and compare each date's hour to desired hours. 
-  streak = 1
+  streak = 0
   sortedRecords = sorted(myRecords, key = lambda l:l[0], reverse=True)
-  
+
   # calculate streak
-  for i in range(len(sortedRecords) - 1):
-    time_cur = datetime.datetime.strptime(sortedRecords[i][0], "%Y-%m-%d")
-    time_prev = datetime.datetime.strptime(sortedRecords[i+1][0], "%Y-%m-%d")
-    day_delta = str(time_cur - time_prev)[0:5]
-    if day_delta != "1 day":
-      break
+  time_now = datetime.datetime.strptime(today, "%Y-%m-%d")
+ 
+  if not sortedRecords:
+    streak = 0
+  elif time_now == datetime.datetime.strptime(sortedRecords[0][0], "%Y-%m-%d") and sortedRecords[0][1] >= goal:
+    streak += 1
+    for i in range(len(sortedRecords) - 1):
+      time_cur = datetime.datetime.strptime(sortedRecords[i][0], "%Y-%m-%d")
+      time_prev = datetime.datetime.strptime(sortedRecords[i+1][0], "%Y-%m-%d")
+      day_delta = str(time_cur - time_prev)[0:5]
+      if day_delta == "1 day" and sortedRecords[i+1][1] >= goal:
+        streak += 1
+      else:
+        break
+
+  # calculate whether each day in the month meets the required hours
+  monthColor = []
+  for i in range(days[0] + 1):
+    monthColor.append(False)
+
+  for i in range(1, days[1] + 1):
+    dayString = str(year) + "-" + str(month) + "-"
+    if i < 10:
+      dayString += "0" + str(i)
+    else: 
+      dayString += str(i)
+
+    added = False
+    for record in sortedRecords:
+      if record[0] == dayString and record[1] >= goal:
+        monthColor.append(True)
+        added = True
+        break
+    if not added:
+      monthColor.append(False)
+
+  # loop through the user record
+  for record in user_records.each():
+    try:
+      name = record.val()['name']
+    except:
+      name = "not set"
+    try: 
+      birthday = record.val()['birthday']
+    except:
+      birthday = "not set"
+
+    # check if goal was defaulted
+    if default_goal:
+      goal = "not set (defaulted to 8 hours / day)"
     else:
-      streak += 1
-  # print(str(streak) + " streak!!!")
+      goal = str(goal) + " hours / day"
 
-  # calculate 
+    # process age
+    if birthday == "not set":
+      age = "not set"
+    else:
+      today = str(date.today())
+      today = datetime.datetime.strptime(today, "%Y-%m-%d")
+      birthday = datetime.datetime.strptime(birthday, "%Y-%m-%d")
+      day_delta = today - birthday
+      day_delta = day_delta.days
+      age = day_delta // 365
 
-  return render_template("index.html", weekdays=weekdays, myDays=myDays, year=year, month=month_name, streak=streak, myRecords=myRecords)
+    # recommend sleep hours based on age
+    if not isinstance(age, int):
+      recommended = "8+ hours (age not set)"
+    elif age <= 12:
+      recommended = "9-12 hours / day"
+    elif age <= 18:
+      recommended = "8-10 hours / day"
+    elif age <= 60:
+      recommended = "7+ hours / day"
+
+  return render_template("index.html", 
+    weekdays=weekdays, 
+    myDays=myDays, 
+    year=year, 
+    month=month_name, 
+    streak=streak, 
+    myRecords=myRecords, 
+    monthColor=monthColor, 
+    today_day=today_day,
+    name=name, age=age, goal=goal, recommended=recommended
+  )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -141,6 +215,79 @@ def login():
   return render_template("login.html")
 
 
+@app.route("/profile")
+def profile():
+
+  # retreive user information
+  records = db.child("users").order_by_child("username").equal_to(session['username']).get()
+  for record in records.each():
+    try:
+      name = record.val()['name']
+    except:
+      name = "not set"
+    try: 
+      birthday = record.val()['birthday']
+      # process age
+      today = str(date.today())
+      today = datetime.datetime.strptime(today, "%Y-%m-%d")
+      birthday = datetime.datetime.strptime(birthday, "%Y-%m-%d")
+      day_delta = today - birthday
+      day_delta = day_delta.days
+      age = day_delta // 365
+    except:
+      age = "not set"
+    try:
+      goal = str(record.val()['goal'])
+      goal += " hours / day"
+    except:
+      goal = "not set (default = 8 hours)"
+    
+
+    email = session['username']
+
+  return render_template("profile.html", name=name,age=age, goal=goal, email=email)
+
+
+# sets user profile
+@app.route("/set_profile", methods=["GET", "POST"])
+def set_profile():
+
+  # get records to get previous name and birthday, if already set 
+  records = db.child("users").order_by_child("username").equal_to(session['username']).get()
+  for record in records.each():
+    try:
+      name_prev = record.val()['name']
+      name = name_prev
+    except:
+      name_prev = "John Harvard"
+      name="not set"
+    try: 
+      birthday_prev = record.val()['birthday']
+    except:
+      birthday_prev = "2000-01-01"
+
+  # after form fills
+  if request.method == 'POST':
+
+    if request.form.get('name'):
+      name = request.form.get('name')
+    birthday = request.form.get('birthday')
+    goal = float(request.form.get('goal'))
+
+    data = {
+      'name': name,
+      'birthday': birthday,
+      'goal': goal
+    }
+
+    # looks for user key and update with provided data
+    for user in records.each():
+      db.child("users").child(user.key()).update(data)
+
+    return redirect("/profile")
+
+  return render_template("set_profile.html", name_prev=name_prev, birthday_prev=birthday_prev)
+
 @app.route("/logout")
 def logout():
   """Log user out"""
@@ -169,7 +316,12 @@ def register():
     # check if username exists
     try:
       user = auth.create_user_with_email_and_password(email=username, password=password)
-      return redirect("/")
+      session['username'] = username
+      data = {
+        "username": username
+      }
+      db.child("users").push(data)
+      return redirect("/set_profile")
     except requests.HTTPError as e:
       error_json = e.args[1]
       error = json.loads(error_json)['error']['message']
@@ -196,10 +348,6 @@ def newnap():
     start_arr = list(map(int, start.split(":")))
     end_arr = list(map(int, end.split(":")))
 
-    # print(start_arr)
-    # print(end_arr)
-    # print("--------------------")
-
     # add the minutes together first, then hours
     if end_arr[0] == start_arr[0]:
       minutes = end_arr[1] - start_arr[1]
@@ -207,35 +355,34 @@ def newnap():
       minutes = int(end_arr[1]) + (60 - int(start_arr[1]))
       start_arr[0] += 1
     
-    # print(str(minutes) + " minutes")
-    
     hours = int(end_arr[0]) - int(start_arr[0])
-    print(start_arr[0])
-    print(end_arr[0])
-    # print(str(hours) + " hours")
 
     if hours < 0:
       hours += 24
     hours += round(minutes/60, 1)
-    # print(str(hours) + " hours updated")
-    # print("----------------------------------------")
 
     username = session["username"]
-    track = db.child("sleepTracker").order_by_child("username").equal_to(username).order_by_child("date").equal_to(date).get()
+    track = db.child("sleepTracker").order_by_child("username").equal_to(username).get()
     # empty list is False, empty dict is None
-    if not track.val():
+    entered = False
+    for day in track.each():
+      if day.val()['date'] == date:
+        existing_hours = day.val()['hours']
+        db.child("sleepTracker").child(day.key()).update({'hours': existing_hours + hours})
+        print("tried")
+        print(username)
+        entered = True
+        break 
+
+    if not entered:
       data = {
         'date': date,
         'hours': hours,
         'username': username
       }
       db.child("sleepTracker").push(data)
-    else:
-      for day in track.each():
-        existing_hours = day.val()['hours']
-        db.child("sleepTracker").child(day.key()).update({'hours': existing_hours + hours})
-
-    return redirect("/")
+    
+    return redirect("/newnap")
 
   today = datetime.date.today()
   week_ago = today - datetime.timedelta(days=7)

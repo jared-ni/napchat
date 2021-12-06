@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    set profile
+{% endblock %}
+
+{% block main %}
+  <div class="topnav">
+    <a id="napchat">Napchat</a>
+    <a href="/">Nap Track</a>
+    <a href="/newnap">New Nap</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a class="active" href="/profile">Profile</a>
+    <a href="/logout">Log Out</a>
+    <a href="#contacContactt"></a>
+    <div class="search-container">
+      <form action="/action_page.php">
+        <input type="text" placeholder="Search.." name="search">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <br/><br/><br/>
+  <div class="jumbotron center">
+    <h1 class="display-4" id="napchat">Set Profile</h1>
+    <hr class="my-4">
+    <form action="/set_profile" method="post">
+      <div class="form-group">
+        <label for="Name">Your name</label>
+        <input type="text" class="form-control" id="name" name="name" placeholder="{{ name_prev }}">
+      </div>
+      <div class="form-group">
+        <label for="birthday">Your birthday</label>
+        <input type="date" class="form-control" id="birthday" name="birthday" value="{{ birthday_prev }}">
+      </div>
+      <div class="form-group">
+        <label for="goal">Daily sleep goal (hours)</label>
+        <select type="number" class="form-control" id="goal" name="goal">
+          <option>4.0</option>
+          <option>4.5</option>
+          <option>5.0</option>
+          <option>5.5</option>
+          <option>6.0</option>
+          <option>6.5</option>
+          <option>7.0</option>
+          <option>7.5</option>
+          <option>8.0</option>
+          <option>8.5</option>
+          <option>9.0</option>
+          <option>9.5</option>
+          <option>10.0</option>
+          <option>10.5</option>
+          <option>11.0</option>
+          <option>11.5</option>
+          <option>12.0</option>
+        </select>
+      </div>
+      
+      <br/>
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary">&nbsp;Edit&nbsp;</button>
+      </div>
+    </form>
+  </div>
+
+  
+{% endblock %}
+    

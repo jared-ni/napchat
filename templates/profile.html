@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    set profile
+{% endblock %}
+
+{% block main %}
+  <div class="topnav">
+    <a id="napchat">Napchat</a>
+    <a href="/">Nap Track</a>
+    <a href="/newnap">New Nap</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a class="active" href="/profile">Profile</a>
+    <a href="/logout">Log Out</a>
+    <a href="#contacContactt"></a>
+    <div class="search-container">
+      <form action="/action_page.php">
+        <input type="text" placeholder="Search.." name="search">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <br/><br/><br/>
+  <div class="jumbotron center">
+    <h1 class="display-4" id="napchat">Your Profile</h1>
+    <hr class="my-4">
+    <p id="napchat">Name:  </p>
+    <p class='text-center'> {{ name }} </p>
+    <p id="napchat">email: <br> </p>
+    <p class='text-center'> {{ email }} </p>
+    <p id="napchat">age: <br> </p>
+    <p class='text-center'> {{ age }} </p>
+    <p id="napchat">sleep goal: <br> </p>
+    <p class='text-center'> {{ goal }} </p>
+    <br>
+    
+    <div class='text-center'>
+      <a class="btn btn-primary" href="/set_profile" role="button">Edit Profile</a>
+    </div>
+  </div>
+
+  
+{% endblock %}
+    
