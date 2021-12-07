@@ -254,10 +254,13 @@ def delete_person():
 
     # delete from friends or pendings
     friends = db.child("friends").order_by_child("friend").equal_to(username).get()
-    pendings = db.child("pending").order_by_child("receiver").equal_to(username).get()
+    pendings1 = db.child("pending").order_by_child("receiver").equal_to(username).get()
+    pendings2 = db.child("pending").order_by_child("sender").equal_to(username).get()
     for friend in friends.each():
       db.child("friends").child(friend.key()).remove()
-    for pending in pendings.each():
+    for pending in pendings1.each():
+      db.child("pending").child(pending.key()).remove()
+    for pending in pendings2.each():
       db.child("pending").child(pending.key()).remove()
 
   return redirect("/friends")
