@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    search user
+{% endblock %}
+
+{% block main %}
+<div class="topnav">
+  <a id="napchat">Napchat</a>
+  <a href="/">Nap Track</a>
+  <a href="/newnap">New Nap</a>
+  <a href='/history'>History</a>
+  <a href='/friends'>Friends</a>
+  <a class="active" href='/search_user'>Find Nappers</a>
+  <a href="/leaderboard">Leaderboard</a>
+  <a href="/profile">Profile</a>
+  <a href="/logout">Log Out</a>
+</div>
+  <br/>
+  <div class="body">
+    <h1 id='napchat'>Find Nappers</h1>
+    <br>
+    <hr class="my-2">
+
+    <div class="jumbotron center">
+      <br>
+      <form action="/search_user" method="post">
+        <table class="table">
+          <tbody>
+            <tr>
+              <td>
+                <div class="form-group">
+                  <input type="text" class="form-control" id="username" name="username" placeholder="Enter name or email">
+                </div>
+              </td>
+              <td>
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </form>
+    </div>
+    <br>
+  </div>
+  
+  
+{% endblock %}
+    

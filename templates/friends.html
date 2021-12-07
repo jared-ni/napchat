@@ -11,10 +11,10 @@
     <a href="/newnap">New Nap</a>
     <a href='/history'>History</a>
     <a class="active" href='/friends'>Friends</a>
+    <a href='/search_user'>Find Nappers</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/profile">Profile</a>
     <a href="/logout">Log Out</a>
-    <a href="#contacContactt"></a>
   </div>
   <br/>
   <div class="body">
@@ -22,7 +22,7 @@
     <br>
     <hr class="my-2">
 
-    <div class="jumbotron calendar">
+    <div class="jumbotron">
       <table class="table">
         <thead>
           <tr>
@@ -30,23 +30,64 @@
             <th scope="col">Name</th>
             <th scope="col">Email</th>
             <th scope="col">Profile</th>
+            <th scope="col">Delete</th>
           </tr>
         </thead>
         <tbody>
-          <tbody>
-            {% for i in range(1, myFriends|length + 1) %}
-            <tr>
-              <th scope="row">{{ i }}</th>
-              <th>{{ myFriends[i-1][1] }}</th>
-              <td>{{ myFriends[i-1][0] }}</td>
-              <td>
-                <form action="/friends" method='post'>
-                  <button type="submit" class="btn btn-primary" name="view" value="{{myFriends[i-1][0]}}">View</button>
-                </form>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
+          {% for i in range(1, myReceived|length + 1) %}
+          <tr>
+            <th scope="row">Friend Request</th>
+            <th>{{ myReceived[i-1][1] }}</th>
+            <td>{{ myReceived[i-1][0] }}</td>
+            <td>
+              <form action="/accept_request" method='post'>
+                <button type="submit" class="btn btn-success" name="accept" value="{{myReceived[i-1][0]}}">Accept</button>
+              </form>
+            </td>
+            <td>
+              <form action="/delete_person" method='post'> 
+                <button type="submit" class="btn btn-danger" name="delete" value="{{myReceived[i-1][0]}}">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% for i in range(1, myRequests|length + 1) %}
+          <tr>
+            <th scope="row">Request Sent</th>
+            <th>{{ myRequests[i-1][1] }}</th>
+            <td>{{ myRequests[i-1][0] }}</td>
+            <td>
+              <form>
+                <button class="btn btn-secondary" name="view">Pending</button>
+              </form>
+            </td>
+            <td>
+              <form action="/delete_person" method='post'> 
+                <button type="submit" class="btn btn-danger" name="delete" value="{{myRequests[i-1][0]}}">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% for i in range(1, myFriends|length + 1) %}
+          <tr>
+            <th scope="row">{{ i }}</th>
+            <th>{{ myFriends[i-1][1] }}</th>
+            <td>{{ myFriends[i-1][0] }}</td>
+            <td>
+              <form action="/friends" method='post'>
+                <button type="submit" class="btn btn-primary" name="view" value="{{myFriends[i-1][0]}}">View</button>
+              </form>
+            </td>
+            <td>
+              <form action="/delete_person" method='post'> 
+                <button type="submit" class="btn btn-danger" name="delete" value="{{myFriends[i-1][0]}}">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
   </div>

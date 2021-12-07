@@ -1,4 +1,5 @@
 import datetime
+from re import search
 from flask import Flask, render_template, make_response, redirect, request, session
 import os
 import pyrebase
@@ -170,7 +171,7 @@ def index():
       recommended = "9-12 hours / day"
     elif age <= 18:
       recommended = "8-10 hours / day"
-    elif age <= 60:
+    elif age:
       recommended = "7+ hours / day"
 
   return render_template("index.html", 
@@ -186,15 +187,93 @@ def index():
   )
 
 
-
 # search for new user to add as friend
-@app.route("/search_user")
+@app.route("/search_user", methods=['POST', 'GET'])
+def search_user():
+  
+  if request.method == "POST":
+    username = request.form.get("username")
+    print(username)
+    print("##############################")
+
+    recordsEmails = db.child("users").order_by_child("username").equal_to(username).get()
+    recordsNames = db.child("users").order_by_child("name").equal_to(username).get()
+    search_result = []
+    for user in recordsEmails.each():
+      person = []
+      person.append(user.val()['name'])
+      person.append(user.val()['username'])
+      search_result.append(person)
+    for user in recordsNames.each():
+      person = []
+      person.append(user.val()['name'])
+      person.append(user.val()['username'])
+      search_result.append(person)
+    
+    # make sure user's current friends and pendings don't appear in the search list
+    friends = db.child("friends").order_by_child("user").equal_to(session["username"]).get()
+    pendings = db.child("pending").order_by_child("sender").equal_to(session["username"]).get()
+    myFriends = []
+    for friend in friends.each():
+      myFriends.append(friend.val()['friend'])
+    for pending in pendings.each():
+      myFriends.append(pending.val()['receiver'])
+    
+    for user in search_result:
+      username = user[1]
+      for friend in myFriends:
+        if username == friend:
+          search_result.remove(user)
+          break
+    
+    print(search_result)
+
+    return render_template("search_results.html", search_result=search_result)
+
+  return render_template("search_user.html")
+
+
+# if click on add friend button after searching for users
+@app.route("/add_friend", methods=["POST", "GET"])
+def add_friend():
+  
+  if request.method == "POST":
+    username = request.form.get('add_friend')
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    print(username)
+
+    # push to pending
+    data = {
+      "sender": session['username'],
+      "receiver": username
+    }
+    db.child("pending").push(data)
+
+  return redirect("/friends")
+
+
+# delete friend or pending
+@app.route("/delete_person", methods=["GET", "POST"])
+def delete_person():
+  if request.method == "POST":
+    username = request.form.get('delete')
+
+    # delete from friends or pendings
+    friends = db.child("friends").order_by_child("friend").equal_to(username).get()
+    pendings = db.child("pending").order_by_child("receiver").equal_to(username).get()
+    for friend in friends.each():
+      db.child("friends").child(friend.key()).remove()
+    for pending in pendings.each():
+      db.child("pending").child(pending.key()).remove()
+
+  return redirect("/friends")
 
 
 # search for and find friends
 @app.route("/friends", methods=['GET', 'POST'])
 def friends():
   
+  # read all friends
   friends = db.child("friends").order_by_child("user").equal_to(session["username"]).get()
   myFriends = []
   for friend in friends.each():
@@ -212,7 +291,43 @@ def friends():
       except:
         name = "N/A"
         friend.append(name)
-  print(myFriends)
+  
+  # read all requests
+  requests = db.child("pending").order_by_child("sender").equal_to(session["username"]).get()
+  received = db.child("pending").order_by_child("receiver").equal_to(session["username"]).get()
+  myRequests = []
+  myReceived = []
+  for req in requests.each():
+    person = []
+    person.append(req.val()['receiver'])
+    myRequests.append(person)
+  for rec in received.each():
+    person = []
+    person.append(rec.val()['sender'])
+    myReceived.append(person)
+  
+  # retrieve receiver's names
+  for req in myRequests:
+    person = db.child('users').order_by_child("username").equal_to(req[0]).get()
+    for record in person.each():
+      try:
+        name = record.val()['name']
+        req.append(name)
+      except:
+        name = "N/A"
+        req.append(name)
+  for rec in myReceived:
+    person = db.child('users').order_by_child("username").equal_to(rec[0]).get()
+    for record in person.each():
+      try:
+        name = record.val()['name']
+        rec.append(name)
+      except:
+        name = "N/A"
+        rec.append(name)
+  
+  # read all incoming pendings
+  
   # sortedRecords = sorted(myFriends, key = lambda l:l[1])
   # print(sortedRecords)
 
@@ -237,7 +352,6 @@ def friends():
         goal = 8
         default_goal = True
 
-    
     # first day determines the number of blank spaces to add
     weekdays = calendar.weekheader(3).split()
     #first_day = datetime.datetime(year, month, 1).weekday() #get day of the week (sun = 6)
@@ -343,7 +457,7 @@ def friends():
         recommended = "9-12 hours / day"
       elif age <= 18:
         recommended = "8-10 hours / day"
-      elif age <= 60:
+      else:
         recommended = "7+ hours / day"
     
       return render_template("friend_profile.html",
@@ -358,7 +472,119 @@ def friends():
         name=name, age=age, goal=goal, recommended=recommended
       )
 
-  return render_template("friends.html", myFriends=myFriends)
+  return render_template("friends.html", myFriends=myFriends, myRequests=myRequests, myReceived=myReceived)
+
+
+@app.route("/accept_request", methods=['GET', 'POST'])
+def accept_request():
+  if request.method == "POST":
+    username = request.form.get("accept")
+    print("***********************")
+    print(username)
+
+    data1 = {
+      "friend": username,
+      "user": session['username']
+    }
+    data2 = {
+      "friend": session['username'],
+      "user": username
+    }
+    db.child("friends").push(data1)
+    db.child("friends").push(data2)
+
+    pendings = db.child("pending").order_by_child("receiver").equal_to(session['username']).get()
+    print(pendings.val())
+    for pending in pendings.each():
+      if username == pending.val()['sender']:
+        print("WHAT THE F")
+        db.child("pending").child(pending.key()).remove()
+        break
+    
+  return redirect("/friends")
+
+
+# weekly leaderboard among friends
+@app.route("/leaderboard", methods=['GET', 'POST'])
+def leaderboard():
+  friends = db.child("friends").order_by_child("user").equal_to(session["username"]).get()
+  rankers = [[session['username']]]
+  for friend in friends.each():
+    ranker = []
+    ranker.append(friend.val()['friend'])
+    rankers.append(ranker)
+
+  for ranker in rankers:
+    users = db.child("users").order_by_child("username").equal_to(ranker[0]).get()
+    for user in users.each():
+      try:
+        ranker.append(user.val()['name'])
+      except:
+        ranker.append("N/A")
+  
+  today = datetime.date.today()
+  week_ago = (today - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+  today = today.strftime("%Y-%m-%d")
+  
+  # go through a week to count total hours and average hours
+  for ranker in rankers:
+    records = db.child("sleepTracker").order_by_child("username").equal_to(ranker[0]).get()
+    counter = 0
+    hours = []
+    total_hours = 0
+    for record in records.each():
+      if week_ago < record.val()['date'] <= today:
+        hours.append(record.val()['hours'])
+        counter += 1
+    for record in hours:
+      total_hours += record
+
+    if counter > 0:
+      average_hours = round(total_hours / counter, 1)
+    else:
+      average_hours = 0.0
+
+    ranker.append(total_hours)
+    ranker.append(average_hours)
+  
+  print(rankers)
+  rankers = sorted(rankers, key = lambda l:l[3], reverse=True)
+  print("_---------------------------------------------------------------------_")
+    
+  return render_template("leaderboard.html", rankers=rankers)
+
+# get records and store in 2d list
+  records = db.child("sleepTracker").order_by_child("username").equal_to(session['username']).get()
+  
+  myRecords = []
+  for record in records.each():
+    dateRecord = []
+    dateRecord.append(record.val()['date'])
+    dateRecord.append(record.val()['hours'])
+    myRecords.append(dateRecord)
+
+  # Must sort with date's order and compare each date's hour to desired hours. 
+  streak = 0
+  sortedRecords = sorted(myRecords, key = lambda l:l[0], reverse=True)
+
+  # calculate streak
+  time_now = datetime.datetime.strptime(today, "%Y-%m-%d")
+ 
+  if not sortedRecords:
+    streak = 0
+  elif time_now == datetime.datetime.strptime(sortedRecords[0][0], "%Y-%m-%d") and sortedRecords[0][1] >= goal:
+    streak += 1
+    for i in range(len(sortedRecords) - 1):
+      time_cur = datetime.datetime.strptime(sortedRecords[i][0], "%Y-%m-%d")
+      time_prev = datetime.datetime.strptime(sortedRecords[i+1][0], "%Y-%m-%d")
+      day_delta = str(time_cur - time_prev)[0:5]
+      if day_delta == "1 day" and sortedRecords[i+1][1] >= goal:
+        streak += 1
+      else:
+        break
+
+
+
 
 
 # history of all naps
@@ -435,7 +661,7 @@ def login():
   return render_template("login.html")
 
 
-
+# user information page
 @app.route("/profile")
 def profile():
 
@@ -467,7 +693,6 @@ def profile():
     email = session['username']
 
   return render_template("profile.html", name=name,age=age, goal=goal, email=email)
-
 
 
 # sets user profile
@@ -510,6 +735,7 @@ def set_profile():
 
   return render_template("set_profile.html", name_prev=name_prev, birthday_prev=birthday_prev)
 
+
 @app.route("/logout")
 def logout():
   """Log user out"""
@@ -540,7 +766,10 @@ def register():
       user = auth.create_user_with_email_and_password(email=username, password=password)
       session['username'] = username
       data = {
-        "username": username
+        "username": username,
+        "birthday": "not set",
+        "name": "not set",
+        "goal": "not set"
       }
       db.child("users").push(data)
       return redirect("/set_profile")
@@ -556,6 +785,7 @@ def register():
       return render_template("register_alert.html", warning=warning)
 
   return render_template("register.html")
+
 
 @app.route("/newnap", methods=['GET', 'POST'])
 @login_required
@@ -610,13 +840,15 @@ def newnap():
     data['end'] = end
     db.child("history").push(data)
     
-    return redirect("/newnap")
+    return redirect("/")
 
   today = datetime.date.today()
   week_ago = today - datetime.timedelta(days=7)
 
   return render_template("newnap.html", today=today, week_ago=week_ago)
   
+
+
 if __name__ == '__main__':
   app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 8080)))
     
