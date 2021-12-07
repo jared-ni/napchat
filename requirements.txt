@@ -1,5 +1,5 @@
 Flask
-pyrebase
+pyrebase==4.5.0
 requests
 Werkzeug
 gunicorn
