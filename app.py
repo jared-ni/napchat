@@ -45,7 +45,7 @@ app = Flask(__name__)
 app.secret_key = db.child("session").child("secret_key").get().val()
 
 
-
+# main page: calendar view
 @app.route("/")
 @login_required
 def index():
@@ -193,8 +193,6 @@ def search_user():
   
   if request.method == "POST":
     username = request.form.get("username")
-    print(username)
-    print("##############################")
 
     recordsEmails = db.child("users").order_by_child("username").equal_to(username).get()
     recordsNames = db.child("users").order_by_child("name").equal_to(username).get()
@@ -225,8 +223,6 @@ def search_user():
         if username == friend:
           search_result.remove(user)
           break
-    
-    print(search_result)
 
     return render_template("search_results.html", search_result=search_result)
 
@@ -239,8 +235,6 @@ def add_friend():
   
   if request.method == "POST":
     username = request.form.get('add_friend')
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    print(username)
 
     # push to pending
     data = {
@@ -325,11 +319,6 @@ def friends():
       except:
         name = "N/A"
         rec.append(name)
-  
-  # read all incoming pendings
-  
-  # sortedRecords = sorted(myFriends, key = lambda l:l[1])
-  # print(sortedRecords)
 
   # search friend's profile
   if request.method == "POST":
@@ -475,13 +464,13 @@ def friends():
   return render_template("friends.html", myFriends=myFriends, myRequests=myRequests, myReceived=myReceived)
 
 
+# accepts friend request button
 @app.route("/accept_request", methods=['GET', 'POST'])
 def accept_request():
   if request.method == "POST":
     username = request.form.get("accept")
-    print("***********************")
-    print(username)
 
+    # two sets of data for both the friend and the user
     data1 = {
       "friend": username,
       "user": session['username']
@@ -494,10 +483,8 @@ def accept_request():
     db.child("friends").push(data2)
 
     pendings = db.child("pending").order_by_child("receiver").equal_to(session['username']).get()
-    print(pendings.val())
     for pending in pendings.each():
       if username == pending.val()['sender']:
-        print("WHAT THE F")
         db.child("pending").child(pending.key()).remove()
         break
     
@@ -547,44 +534,9 @@ def leaderboard():
     ranker.append(total_hours)
     ranker.append(average_hours)
   
-  print(rankers)
   rankers = sorted(rankers, key = lambda l:l[3], reverse=True)
-  print("_---------------------------------------------------------------------_")
     
   return render_template("leaderboard.html", rankers=rankers)
-
-# get records and store in 2d list
-  records = db.child("sleepTracker").order_by_child("username").equal_to(session['username']).get()
-  
-  myRecords = []
-  for record in records.each():
-    dateRecord = []
-    dateRecord.append(record.val()['date'])
-    dateRecord.append(record.val()['hours'])
-    myRecords.append(dateRecord)
-
-  # Must sort with date's order and compare each date's hour to desired hours. 
-  streak = 0
-  sortedRecords = sorted(myRecords, key = lambda l:l[0], reverse=True)
-
-  # calculate streak
-  time_now = datetime.datetime.strptime(today, "%Y-%m-%d")
- 
-  if not sortedRecords:
-    streak = 0
-  elif time_now == datetime.datetime.strptime(sortedRecords[0][0], "%Y-%m-%d") and sortedRecords[0][1] >= goal:
-    streak += 1
-    for i in range(len(sortedRecords) - 1):
-      time_cur = datetime.datetime.strptime(sortedRecords[i][0], "%Y-%m-%d")
-      time_prev = datetime.datetime.strptime(sortedRecords[i+1][0], "%Y-%m-%d")
-      day_delta = str(time_cur - time_prev)[0:5]
-      if day_delta == "1 day" and sortedRecords[i+1][1] >= goal:
-        streak += 1
-      else:
-        break
-
-
-
 
 
 # history of all naps
@@ -624,13 +576,12 @@ def history():
         # remove from history
         db.child("history").child(record.key()).remove()
 
-
         return redirect("/history")
 
   return render_template("history.html", sortedRecords=sortedRecords)
 
 
-
+# login function
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -689,7 +640,6 @@ def profile():
     except:
       goal = "not set (default = 8 hours)"
     
-
     email = session['username']
 
   return render_template("profile.html", name=name,age=age, goal=goal, email=email)
@@ -736,6 +686,7 @@ def set_profile():
   return render_template("set_profile.html", name_prev=name_prev, birthday_prev=birthday_prev)
 
 
+# logout 
 @app.route("/logout")
 def logout():
   """Log user out"""
@@ -745,6 +696,7 @@ def logout():
   return redirect("/")
 
 
+# register
 @app.route("/register", methods=['GET', 'POST'])
 def register():
   # push or set to database for sign up
@@ -787,6 +739,7 @@ def register():
   return render_template("register.html")
 
 
+# for logging new naps
 @app.route("/newnap", methods=['GET', 'POST'])
 @login_required
 def newnap():
@@ -821,8 +774,6 @@ def newnap():
       if day.val()['date'] == date:
         existing_hours = day.val()['hours']
         db.child("sleepTracker").child(day.key()).update({'hours': existing_hours + hours})
-        print("tried")
-        print(username)
         entered = True
         break 
     
