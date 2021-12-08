@@ -1,12 +1,12 @@
 # napchat
 
-Link to the deployed app: https://thenapchat.herokuapp.com/
+Video Presentation Link: https://youtu.be/EcYRgRpDp6E
 
 Introduction to my CS50 final project: 
 Napchat, a.k.a Napp, is social media web app that incentivizes sleep-deprived college students to develop healthy sleep schedules by allowing them to log their sleep, maintain a streak, and compete with their friends via a weekly leaderboard on who has the best sleep schedule. 
 
 To configure and use the project: 
-The project requires no compiling. There are two ways that the user can run the project: the first way is simply by using the deployment link https://thenapchat.herokuapp.com/, because I have deployed it to Heroku; the second way is to download all the code files, open them in VSCode, and click on "run code" in app.py, which runs the app locally on the machine. To actually use the app, the user should click on the "sign up" button on the login page, create an account using an email and password (which must be at least 6 characters long). The user can use the same email and password to log in every time they want to use the app. Feel free to use the already-made account I used for testing: 8@gmail.com, password: 111111, to test specific functionalities. 
+The project requires no compiling. All you have to do to run it is to download the whole app directory and click "run app" in app.py in VSCode. However, I also linked the deployment link https://thenapchat.herokuapp.com/; you can either run it locally on VSCode (recommanded) or click the Heroku link (I'm not sure if it requires pre-authorization with CS50 staff so I recommend just sticking with VSCode). Please download all the code files, open them in VSCode, and click on "run code" in app.py, which runs the app locally on the machine. Note that I used some python libraries (such as Pyrebase4), which must be pip installed onto the local machine before the app can be ran. To actually use the app, the user should click on the "sign up" button on the login page, create an account using an email and password (which must be at least 6 characters long). The user can use the same email and password to log in every time they want to use the app. Feel free to use the already-made account I used for testing: 8@gmail.com, password: 111111, to test specific functionalities. 
 
 After creating the account, the user is directly logged in and is redirected to the "set profile" page, where the user should enter their name, birthday, and daily sleep goal. After entering the information, the user is able to see their completed profile displaying their name, email, age, and daily sleep goal. (If see internal server error, which could occasionally happen via the deployed link, the user can just refresh or click to go back one step). The user can use the navigation bar to access other parts of the app. Clicking on "Nap Track," the user is able to see their name, recommended sleep (provided based on user birthday), their sleep goal (if not set, will display a default value), their current streak (for reaching the sleep goal), and a calendar view for the current month. The current date is boardered on the calendar. For every date in the month, if the box of the date is yellow, it means sleep goal is met for that day based on the information that the user has logged. If the most current day doesn't meet the sleep goal and is white, the streak will be reset to 0.
 
@@ -16,6 +16,8 @@ The user can use "Find Nappers" tab in the nav bar to search for other users, pr
 
 To test all of these social media functions, I recommend the tester make two separate accounts for testing the friend request functionalities.Or, the tester can use the account that I've provided, with email "8@gmail.com" and password "111111". Clicking on the "Friends" tab from this account, they will see one friend request, one pending sent request, and one friend. If the user clicks on the accept request, they can become friend with the other user. Once two users become friends, they can view each other's Sleep Track profiles. By clicking on the "Leaderboard" tab in the nav bar, the user can see a leaderboard ranking all of the user's friends and the user by their average daily sleep hours. Average sleep is calculated based on the number of hours and dates logged in the past 7 days. More logged hours in the past week doesn't necessarily transfer to a higher average hour. 
 
-Enjoy using my app! 
+Please enjoy the app!
+--Jared Hu, HC'25
+
 
 
