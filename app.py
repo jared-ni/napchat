@@ -9,7 +9,6 @@ from datetime import date, time
 import requests
 import json
 import calendar
-import pytz
 
 # firebase configuration
 firebaseConfig = {
@@ -51,10 +50,9 @@ app.secret_key = db.child("session").child("secret_key").get().val()
 @login_required
 def index():
   
-  tz = pytz.timezone("US/Eastern")
-  year = datetime.datetime.now(tz).year
-  month = datetime.datetime.now(tz).month
-  today = str(date.today(tz))
+  year = datetime.datetime.now().year
+  month = datetime.datetime.now().month
+  today = str(date.today())
   today_day = int(today[8:])
   goal = 8
 
@@ -330,9 +328,8 @@ def friends():
     username = request.form.get("view")
 
     # index function
-    tz = pytz.timezone('US/Eastern')
-    year = datetime.datetime.now(tz).year
-    month = datetime.datetime.now(tz).month
+    year = datetime.datetime.now().year
+    month = datetime.datetime.now().month
     today = str(date.today())
     today_day = int(today[8:])
     goal = 8
@@ -799,8 +796,7 @@ def newnap():
     
     return redirect("/")
 
-  tz = pytz.timezone("US/Eastern")
-  today = datetime.date.today(tz)
+  today = datetime.date.today()
   week_ago = today - datetime.timedelta(days=7)
 
   return render_template("newnap.html", today=today, week_ago=week_ago)
