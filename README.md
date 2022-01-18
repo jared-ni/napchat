@@ -1,6 +1,7 @@
 # napchat
 
 Video Presentation Link: https://youtu.be/EcYRgRpDp6E
+App Link: https://thenapchat.herokuapp.com/
 
 Introduction to my CS50 final project: 
 Napchat, a.k.a Napp, is social media web app that incentivizes sleep-deprived college students to develop healthy sleep schedules by allowing them to log their sleep, maintain a streak, and compete with their friends via a weekly leaderboard on who has the best sleep schedule. 
