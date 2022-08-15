@@ -19,7 +19,7 @@ The user can use "Find Nappers" tab in the nav bar to search for other users, pr
 To test all of these social media functions, I recommend the tester make two separate accounts for testing the friend request functionalities.Or, the tester can use the account that I've provided, with email "8@gmail.com" and password "111111". Clicking on the "Friends" tab from this account, they will see one friend request, one pending sent request, and one friend. If the user clicks on the accept request, they can become friend with the other user. Once two users become friends, they can view each other's Sleep Track profiles. By clicking on the "Leaderboard" tab in the nav bar, the user can see a leaderboard ranking all of the user's friends and the user by their average daily sleep hours. Average sleep is calculated based on the number of hours and dates logged in the past 7 days. More logged hours in the past week doesn't necessarily transfer to a higher average hour. 
 
 Please enjoy the app!
---Jared Hu, HC'25
+--Jared Ni, HC'25
 
 
 
